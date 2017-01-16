@@ -1,0 +1,4 @@
+include ':auto-value-json'
+include ':auto-value-json-annotations'
+include ':auto-value-json-tests'
+rootProject.name = 'auto-value-json-root'

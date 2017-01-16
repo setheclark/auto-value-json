@@ -1,0 +1,28 @@
+group 'sethclark.io'
+version '1.0-SNAPSHOT'
+
+task wrapper(type: Wrapper) {
+  gradleVersion = '3.1'
+  distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-bin.zip"
+}
+
+buildscript {
+  repositories {
+    mavenCentral()
+    maven {
+      url 'https://plugins.gradle.org/m2/'
+    }
+  }
+
+  dependencies {
+    classpath 'net.ltgt.gradle:gradle-apt-plugin:0.9'
+  }
+}
+
+allprojects {
+  repositories {
+    mavenCentral()
+  }
+
+  apply from: rootProject.file('dependencies.gradle')
+}
