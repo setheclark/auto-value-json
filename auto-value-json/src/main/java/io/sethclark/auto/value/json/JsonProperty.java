@@ -72,8 +72,11 @@ public final class JsonProperty {
   }
 
   String serializedName() {
+    JsonName jsonName = element.getAnnotation(JsonName.class);
+    if (jsonName != null) {
+      return jsonName.value();
+    }
 
-    //TODO Add support for custom names.
     return humanName;
   }
 }

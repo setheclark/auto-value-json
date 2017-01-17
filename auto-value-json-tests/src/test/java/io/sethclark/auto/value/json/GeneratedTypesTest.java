@@ -49,4 +49,12 @@ public class GeneratedTypesTest {
     assertThat(adapterObject.aInt()).isEqualTo(1);
     assertThat(adapterObject.aSubType().value).isEqualTo("subType");
   }
+
+  @Test public void namedObject() throws JSONException {
+    JSONObject testJsonObj = new JSONObject("{\n" + "  \"MyInt\":13\n" + "}");
+
+    NamedObject namedObject = NamedObject.create(testJsonObj);
+
+    assertThat(namedObject.aInt()).isEqualTo(13);
+  }
 }
