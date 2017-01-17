@@ -2,6 +2,8 @@ package io.sethclark.auto.value.json;
 
 import com.google.auto.service.AutoService;
 import com.google.auto.value.extension.AutoValueExtension;
+import com.google.common.base.CaseFormat;
+import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
@@ -14,7 +16,6 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.json.JSONObject;
 
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
+import static javax.lang.model.element.Modifier.PRIVATE;
 import static javax.lang.model.element.Modifier.STATIC;
 
 @AutoService(AutoValueExtension.class) public class AutoValueJsonExtension
@@ -62,13 +64,20 @@ import static javax.lang.model.element.Modifier.STATIC;
     List<JsonProperty> properties = JsonProperty.from(context);
 
     Map<String, TypeName> types = convertPropertiesToTypes(context.properties());
+    NameAllocator nameAllocator = new NameAllocator();
+    Map<TypeMirror, FieldSpec> typeAdapters = getTypeAdapters(properties, nameAllocator);
 
     TypeName superClass = TypeVariableName.get(classToExtend);
-
     TypeSpec.Builder subclass = TypeSpec.classBuilder(className)
         .superclass(superClass)
         .addMethod(generateConstructor(types))
-        .addMethod(generateFromJson(context, properties));
+        .addMethod(generateFromJson(context, properties, typeAdapters, nameAllocator));
+
+    if (!typeAdapters.isEmpty()) {
+      for (FieldSpec field : typeAdapters.values()) {
+        subclass.addField(field);
+      }
+    }
 
     if (isFinal) {
       subclass.addModifiers(FINAL);
@@ -101,8 +110,8 @@ import static javax.lang.model.element.Modifier.STATIC;
     return params.append(")").toString();
   }
 
-  MethodSpec generateFromJson(Context context, List<JsonProperty> properties) {
-    NameAllocator nameAllocator = new NameAllocator();
+  MethodSpec generateFromJson(Context context, List<JsonProperty> properties,
+      Map<TypeMirror, FieldSpec> typeAdapters, NameAllocator nameAllocator) {
     ParameterSpec json =
         ParameterSpec.builder(JSONObject.class, nameAllocator.newName("json")).build();
 
@@ -143,9 +152,11 @@ import static javax.lang.model.element.Modifier.STATIC;
       FieldSpec field = entry.getValue();
 
       builder.beginControlFlow("case $S:", prop.serializedName());
-      if (prop.supportedType) {
+      if (prop.typeAdapter != null && typeAdapters.containsKey(prop.typeAdapter)) {
+        FieldSpec typeAdapter = typeAdapters.get(prop.typeAdapter);
+        builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, prop, json, field, key));
+      } else if (prop.supportedType) {
         builder.addCode(JsonGeneratorUtils.readValue(prop, json, field, key));
-        //builder.addCode("$N = ", field).addStatement(prop.jsonMethod(), json, key);
       }
       builder.addStatement("break");
 
@@ -197,6 +208,24 @@ import static javax.lang.model.element.Modifier.STATIC;
     } else {
       return "null";
     }
+  }
+
+  private ImmutableMap<TypeMirror, FieldSpec> getTypeAdapters(List<JsonProperty> properties,
+      NameAllocator nameAllocator) {
+    Map<TypeMirror, FieldSpec> typeAdapters = new LinkedHashMap<>();
+    for (JsonProperty property : properties) {
+      if (property.typeAdapter != null && !typeAdapters.containsKey(property.typeAdapter)) {
+        ClassName typeName = (ClassName) TypeName.get(property.typeAdapter);
+        String name = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, typeName.simpleName());
+        name = nameAllocator.newName(name, typeName);
+
+        typeAdapters.put(property.typeAdapter,
+            FieldSpec.builder(typeName, NameAllocator.toJavaIdentifier(name), PRIVATE, STATIC,
+                FINAL).initializer("new $T()", typeName).build());
+      }
+    }
+
+    return ImmutableMap.copyOf(typeAdapters);
   }
 
   private Map<String, TypeName> convertPropertiesToTypes(

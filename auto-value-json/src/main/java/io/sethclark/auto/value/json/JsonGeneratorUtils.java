@@ -37,4 +37,11 @@ public class JsonGeneratorUtils {
 
     return builder.build();
   }
+
+  public static CodeBlock readWithAdapter(FieldSpec typeAdapter, JsonProperty prop,
+      ParameterSpec json, FieldSpec field, FieldSpec key) {
+    return CodeBlock.builder()
+        .addStatement("$N = $N.fromJson($N, $N)", field, typeAdapter, json, key)
+        .build();
+  }
 }

@@ -6,7 +6,7 @@ targetCompatibility = versions.java
 
 dependencies {
   compile libraries.json
-
+  compile project(':auto-value-json-annotations')
   compileOnly project(':auto-value-json')
   apt project(':auto-value-json')
 

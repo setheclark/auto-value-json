@@ -51,7 +51,7 @@ public final class JsonProperty {
     supportedType = SUPPORTED_TYPES.contains(type);
 
     JsonAdapter jsonAdapter = element.getAnnotation(JsonAdapter.class);
-    if(jsonAdapter != null) {
+    if (jsonAdapter != null) {
       try {
         jsonAdapter.value();
       } catch (MirroredTypeException e) {
@@ -71,38 +71,9 @@ public final class JsonProperty {
     return builder.build();
   }
 
-  public TypeMirror valueAdapter() {
-    //return (TypeMirror) getAnnotation
-    return null;
-  }
-
   String serializedName() {
 
     //TODO Add support for custom names.
     return humanName;
   }
-
-  //public String jsonMethod() {
-  //  if (type.equals(TypeName.get(String.class))) {
-  //    return "$N.getString($N)";
-  //  } else if (type.equals(TypeName.INT) || type.equals(TypeName.INT.box())) {
-  //    return "$N.getInt($N)";
-  //  } else if (type.equals(TypeName.DOUBLE) || type.equals(TypeName.DOUBLE.box())) {
-  //    return "$N.getDouble($N)";
-  //  } else if (type.equals(TypeName.FLOAT) || type.equals(TypeName.FLOAT.box())) {
-  //    return "(float) $N.getDouble($N)";
-  //  } else if (type.equals(TypeName.BOOLEAN) || type.equals(TypeName.BOOLEAN.box())) {
-  //    return "$N.getBoolean($N)";
-  //  } else if (type.equals(TypeName.LONG) || type.equals(TypeName.LONG.box())) {
-  //    return "$N.getLong($N)";
-  //  } else if (type.equals(TypeName.SHORT) || type.equals(TypeName.SHORT.box())) {
-  //    return "(short) $N.getInt($N)";
-  //  } else if (type.equals(TypeName.BYTE) || type.equals(TypeName.BYTE.box())) {
-  //    return "(byte) $N.getInt($N)";
-  //  } else if (type.equals(TypeName.CHAR) || type.equals(TypeName.CHAR.box())) {
-  //    return "$N.getString($N).charAt(0)"; //TODO Revisit this. It will fail with empty strings.
-  //  }
-  //
-  //  throw new IllegalStateException(String.format("supportedType [%s] with not method.", type));
-  //}
 }
