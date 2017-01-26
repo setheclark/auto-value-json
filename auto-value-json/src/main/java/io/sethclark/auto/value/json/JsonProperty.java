@@ -79,4 +79,8 @@ public final class JsonProperty {
 
     return humanName;
   }
+
+  boolean nullable() {
+    return annotations.contains("Nullable");
+  }
 }

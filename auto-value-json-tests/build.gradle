@@ -12,4 +12,5 @@ dependencies {
 
   testCompile libraries.junit
   testCompile libraries.assertJ
+  testCompile libraries.jsonAssert
 }

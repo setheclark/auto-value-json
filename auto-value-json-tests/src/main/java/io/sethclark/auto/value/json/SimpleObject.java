@@ -10,6 +10,8 @@ import org.json.JSONObject;
     return AutoValue_SimpleObject.fromJson(json);
   }
 
+  public abstract JSONObject toJson();
+
   public abstract int aInt();
 
   public abstract byte aByte();

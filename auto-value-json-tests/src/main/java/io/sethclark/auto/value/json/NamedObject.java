@@ -10,5 +10,7 @@ import org.json.JSONObject;
     return AutoValue_NamedObject.fromJson(json);
   }
 
+  public abstract JSONObject toJson();
+
   @JsonName("MyInt") public abstract int aInt();
 }

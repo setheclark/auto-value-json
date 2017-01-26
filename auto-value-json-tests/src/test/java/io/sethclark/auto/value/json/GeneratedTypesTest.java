@@ -3,13 +3,14 @@ package io.sethclark.auto.value.json;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GeneratedTypesTest {
 
   @Test public void simpleObject() throws JSONException {
-    JSONObject testJsonObj = new JSONObject(
+    JSONObject originalJson = new JSONObject(
         "{" + "    \"aInt\": 1," + "    \"aByte\": 4," + "    \"aShort\": 6,"
             + "    \"aDouble\": 1.2," + "    \"aFloat\": 1.0," + "    \"aLong\": 1123581321345589,"
             + "    \"aBoolean\": true," + "    \"aChar\":\"d\"," + "    \"aIntObj\": 2,"
@@ -18,7 +19,7 @@ public class GeneratedTypesTest {
             + "    \"aBooleanObj\": false," + "    \"aCharObj\":\"s\","
             + "    \"aString\": \"String\"" + "}");
 
-    SimpleObject simpleObject = SimpleObject.create(testJsonObj);
+    SimpleObject simpleObject = SimpleObject.create(originalJson);
 
     assertThat(simpleObject.aInt()).isEqualTo(1);
     assertThat(simpleObject.aByte()).isEqualTo((byte) 4);
@@ -37,24 +38,36 @@ public class GeneratedTypesTest {
     assertThat(simpleObject.aBooleanObj()).isFalse();
     assertThat(simpleObject.aCharObj()).isEqualTo('s');
     assertThat(simpleObject.aString()).isEqualTo("String");
+
+    JSONObject toJson = simpleObject.toJson();
+
+    JSONAssert.assertEquals(toJson.toString(), originalJson, true);
   }
 
   @Test public void adapterObject() throws JSONException {
-    JSONObject testJsonObj = new JSONObject(
+    JSONObject originalJson = new JSONObject(
         "{\n" + "    \"aInt\": 1,\n" + "    \"aSubType\": {\n" + "        \"value\": \"subType\"\n"
             + "    }\n" + "}");
 
-    AdapterObject adapterObject = AdapterObject.create(testJsonObj);
+    AdapterObject adapterObject = AdapterObject.create(originalJson);
 
     assertThat(adapterObject.aInt()).isEqualTo(1);
     assertThat(adapterObject.aSubType().value).isEqualTo("subType");
+
+    JSONObject toJson = adapterObject.toJson();
+
+    JSONAssert.assertEquals(toJson.toString(), originalJson, true);
   }
 
   @Test public void namedObject() throws JSONException {
-    JSONObject testJsonObj = new JSONObject("{\n" + "  \"MyInt\":13\n" + "}");
+    JSONObject originalJson = new JSONObject("{\n" + "  \"MyInt\":13\n" + "}");
 
-    NamedObject namedObject = NamedObject.create(testJsonObj);
+    NamedObject namedObject = NamedObject.create(originalJson);
 
     assertThat(namedObject.aInt()).isEqualTo(13);
+
+    JSONObject toJson = namedObject.toJson();
+
+    JSONAssert.assertEquals(toJson.toString(), originalJson, true);
   }
 }

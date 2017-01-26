@@ -7,7 +7,8 @@ ext {
               json       : '20090211',
 
               junit      : '4.12',
-              assertJ    : '2.6.0']
+              assertJ    : '2.6.0',
+              jsonAssert : '1.4.0']
 
   libraries = [javaPoet   : "com.squareup:javapoet:$versions.javaPoet",
                autoValue  : "com.google.auto.value:auto-value:$versions.autoValue",
@@ -16,5 +17,6 @@ ext {
                json       : "org.json:json:$versions.json",
 
                junit      : "junit:junit:$versions.junit",
-               assertJ    : "org.assertj:assertj-core:$versions.assertJ"]
+               assertJ    : "org.assertj:assertj-core:$versions.assertJ",
+               jsonAssert : "org.skyscreamer:jsonassert:$versions.jsonAssert"]
 }

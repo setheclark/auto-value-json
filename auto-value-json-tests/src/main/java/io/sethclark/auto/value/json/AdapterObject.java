@@ -10,6 +10,8 @@ import org.json.JSONObject;
     return AutoValue_AdapterObject.fromJson(json);
   }
 
+  public abstract JSONObject toJson();
+
   @JsonAdapter(IntAdapter.class) public abstract int aInt();
 
   @JsonAdapter(SubTypeAdapter.class) public abstract SubType aSubType();
@@ -29,7 +31,11 @@ import org.json.JSONObject;
     }
 
     @Override public void toJson(JSONObject json, String name, Integer value) {
-
+      try {
+        json.put(name, value);
+      } catch (JSONException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 
@@ -40,7 +46,11 @@ import org.json.JSONObject;
     }
 
     @Override public void toJson(JSONObject json, String name, SubType value) {
-
+      try {
+        json.put(name, new JSONObject().put("value", value.value));
+      } catch (JSONException e) {
+        throw new RuntimeException(e);
+      }
     }
   }
 }

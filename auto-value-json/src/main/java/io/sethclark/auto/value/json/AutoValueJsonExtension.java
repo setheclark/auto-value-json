@@ -3,6 +3,7 @@ package io.sethclark.auto.value.json;
 import com.google.auto.service.AutoService;
 import com.google.auto.value.extension.AutoValueExtension;
 import com.google.common.base.CaseFormat;
+import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -16,10 +17,13 @@ import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -40,6 +44,21 @@ import static javax.lang.model.element.Modifier.STATIC;
   private static final ClassName JSON_OBJ_CLASS_NAME = ClassName.get(JSONObject.class);
 
   @Override public boolean applicable(Context context) {
+    return generateReadMethod(context) || getJsonWriteMethod(context).isPresent();
+  }
+
+  private static Optional<ExecutableElement> getJsonWriteMethod(Context context) {
+    TypeElement type = context.autoValueClass();
+    for (ExecutableElement method : ElementFilter.methodsIn(type.getEnclosedElements())) {
+      if (method.getParameters().size() == 0 && TypeName.get(method.getReturnType())
+          .equals(JSON_OBJ_CLASS_NAME) && method.getModifiers().contains(ABSTRACT)) {
+        return Optional.of(method);
+      }
+    }
+    return Optional.absent();
+  }
+
+  private static boolean generateReadMethod(Context context) {
     TypeElement type = context.autoValueClass();
     //Find method with param as JSONObject and return type as autovalue class.
     for (ExecutableElement method : ElementFilter.methodsIn(type.getEnclosedElements())) {
@@ -59,6 +78,14 @@ import static javax.lang.model.element.Modifier.STATIC;
     return false;
   }
 
+  @Override public Set<ExecutableElement> consumeMethods(Context context) {
+    Optional<ExecutableElement> writeMethod = getJsonWriteMethod(context);
+    if (writeMethod.isPresent()) {
+      return Collections.singleton(writeMethod.get());
+    }
+    return Collections.emptySet();
+  }
+
   @Override public String generateClass(Context context, String className, String classToExtend,
       boolean isFinal) {
     List<JsonProperty> properties = JsonProperty.from(context);
@@ -70,8 +97,18 @@ import static javax.lang.model.element.Modifier.STATIC;
     TypeName superClass = TypeVariableName.get(classToExtend);
     TypeSpec.Builder subclass = TypeSpec.classBuilder(className)
         .superclass(superClass)
-        .addMethod(generateConstructor(types))
-        .addMethod(generateFromJson(context, properties, typeAdapters, nameAllocator));
+        .addMethod(generateConstructor(types));
+
+    if (generateReadMethod(context)) {
+      subclass.addMethod(
+          generateFromJson(context, properties, typeAdapters, nameAllocator.clone()));
+    }
+
+    Optional<ExecutableElement> writeMethod = getJsonWriteMethod(context);
+    if (writeMethod.isPresent()) {
+      subclass.addMethod(generateWriteToJson(context, writeMethod.get(), properties, typeAdapters,
+          nameAllocator.clone()));
+    }
 
     if (!typeAdapters.isEmpty()) {
       for (FieldSpec field : typeAdapters.values()) {
@@ -124,9 +161,10 @@ import static javax.lang.model.element.Modifier.STATIC;
         .addException(JSONException.class);
 
     Map<JsonProperty, FieldSpec> fields = new LinkedHashMap<>(properties.size());
-    for (JsonProperty prop : properties) {
-      FieldSpec field = FieldSpec.builder(prop.type, nameAllocator.newName(prop.humanName)).build();
-      fields.put(prop, field);
+    for (JsonProperty property : properties) {
+      FieldSpec field =
+          FieldSpec.builder(property.type, nameAllocator.newName(property.humanName)).build();
+      fields.put(property, field);
 
       builder.addStatement("$T $N = $L", field.type, field, defaultValue(field.type));
     }
@@ -154,7 +192,7 @@ import static javax.lang.model.element.Modifier.STATIC;
       builder.beginControlFlow("case $S:", prop.serializedName());
       if (prop.typeAdapter != null && typeAdapters.containsKey(prop.typeAdapter)) {
         FieldSpec typeAdapter = typeAdapters.get(prop.typeAdapter);
-        builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, prop, json, field, key));
+        builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, json, field, key));
       } else if (prop.supportedType) {
         builder.addCode(JsonGeneratorUtils.readValue(prop, json, field, key));
       }
@@ -171,6 +209,42 @@ import static javax.lang.model.element.Modifier.STATIC;
             .add(CodeBlock.of("new $T", finalClassName))
             .addStatement(paramsList(fields.size()), fields.values().toArray())
             .build());
+
+    return builder.build();
+  }
+
+  private MethodSpec generateWriteToJson(Context context, ExecutableElement writeMethodElement,
+      List<JsonProperty> properties, Map<TypeMirror, FieldSpec> typeAdapters,
+      NameAllocator nameAllocator) {
+    Set<Modifier> modifierSet = new TreeSet<>(writeMethodElement.getModifiers());
+    modifierSet.remove(ABSTRACT);
+    MethodSpec.Builder builder =
+        MethodSpec.methodBuilder(writeMethodElement.getSimpleName().toString())
+            .addAnnotation(Override.class)
+            .addModifiers(modifierSet)
+            .returns(JSON_OBJ_CLASS_NAME);
+
+    FieldSpec json = FieldSpec.builder(JSON_OBJ_CLASS_NAME, nameAllocator.newName("json")).build();
+    builder.addStatement("$1T $2N = new $1T()", JSON_OBJ_CLASS_NAME, json);
+
+    for (JsonProperty prop : properties) {
+      if (prop.typeAdapter != null && typeAdapters.containsKey(prop.typeAdapter)) {
+
+        builder.addCode(
+            JsonGeneratorUtils.writeWithAdapter(typeAdapters.get(prop.typeAdapter), json, prop));
+      } else {
+        //TODO Discuss: Is null check needed?
+        if (prop.nullable()) {
+          builder.beginControlFlow("if ($N() != null)", prop.methodName);
+          builder.addCode(JsonGeneratorUtils.writeValue(prop, json));
+          builder.endControlFlow();
+        } else {
+          builder.addCode(JsonGeneratorUtils.writeValue(prop, json));
+        }
+      }
+    }
+
+    builder.addStatement("return $N", json);
 
     return builder.build();
   }
