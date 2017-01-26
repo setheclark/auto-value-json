@@ -194,7 +194,7 @@ import static javax.lang.model.element.Modifier.STATIC;
         FieldSpec typeAdapter = typeAdapters.get(prop.typeAdapter);
         builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, json, field, key));
       } else if (prop.supportedType) {
-        builder.addCode(JsonGeneratorUtils.readValue(prop, json, field, key));
+        builder.addCode(JsonGeneratorUtils.readValue(prop, json, field, key, nameAllocator));
       }
       builder.addStatement("break");
 

@@ -2,8 +2,10 @@ package io.sethclark.auto.value.json;
 
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.NameAllocator;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import javax.lang.model.element.Modifier;
 import org.json.JSONException;
 
 public class JsonGeneratorUtils {
@@ -11,8 +13,7 @@ public class JsonGeneratorUtils {
   public static final TypeName JSON_EXCEPTION = TypeName.get(JSONException.class);
 
   static CodeBlock readValue(JsonProperty property, ParameterSpec json, FieldSpec field,
-      FieldSpec key) {
-    //TODO Handle characters
+      FieldSpec key, NameAllocator nameAllocator) {
     //TODO Handle collections.
     TypeName type = property.type;
     CodeBlock.Builder builder = CodeBlock.builder();
@@ -34,8 +35,12 @@ public class JsonGeneratorUtils {
     } else if (type.equals(TypeName.BYTE) || type.equals(TypeName.BYTE.box())) {
       builder.addStatement("$N = (byte) $N.getInt($N)", field, json, key);
     } else if (type.equals(TypeName.CHAR) || type.equals(TypeName.CHAR.box())) {
-      builder.addStatement("$N = $N.getString($N).charAt(0)", field, json, key);
-      //TODO Revisit this. It will fail with empty strings.
+      FieldSpec tempVal =
+          FieldSpec.builder(String.class, nameAllocator.newName("tempVal"), Modifier.FINAL).build();
+      builder.addStatement("$T $N = $N.getString($N)", tempVal.type, tempVal, json, key);
+      builder.beginControlFlow("if(!$N.isEmpty())", tempVal);
+      builder.addStatement("$N = $N.charAt(0)", field, tempVal);
+      builder.endControlFlow();
     } else {
       throw new IllegalStateException(String.format("supportedType [%s] with not method.", type));
     }
@@ -52,9 +57,7 @@ public class JsonGeneratorUtils {
 
   public static CodeBlock writeValue(JsonProperty property, FieldSpec json) {
     //TODO If write method declares JSONException then don't wrap all puts.
-    //TODO Handle characters
     //TODO Handle collections.
-    //TODO Write tests for write method.
     TypeName type = property.type;
     CodeBlock.Builder builder = CodeBlock.builder();
 

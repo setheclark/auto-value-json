@@ -10,14 +10,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GeneratedTypesTest {
 
   @Test public void simpleObject() throws JSONException {
-    JSONObject originalJson = new JSONObject(
-        "{" + "    \"aInt\": 1," + "    \"aByte\": 4," + "    \"aShort\": 6,"
-            + "    \"aDouble\": 1.2," + "    \"aFloat\": 1.0," + "    \"aLong\": 1123581321345589,"
-            + "    \"aBoolean\": true," + "    \"aChar\":\"d\"," + "    \"aIntObj\": 2,"
-            + "    \"aByteObj\": 16," + "    \"aShortObj\": 5," + "    \"aDoubleObj\": 1.3,"
-            + "    \"aFloatObj\": 1.1," + "    \"aLongObj\": 9855431231853211,"
-            + "    \"aBooleanObj\": false," + "    \"aCharObj\":\"s\","
-            + "    \"aString\": \"String\"" + "}");
+    JSONObject originalJson = new JSONObject( //
+        "{\"aInt\": 1," //
+            + "\"aByte\": 4,"  //
+            + "\"aShort\": 6,"  //
+            + "\"aDouble\": 1.2," //
+            + "\"aFloat\": 1.0,"  //
+            + "\"aLong\": 1123581321345589," //
+            + "\"aBoolean\": true,"  //
+            + "\"aChar\":\"d\","  //
+            + "\"aIntObj\": 2," //
+            + "\"aByteObj\": 16,"  //
+            + "\"aShortObj\": 5,"  //
+            + "\"aDoubleObj\": 1.3," //
+            + "\"aFloatObj\": 1.1,"  //
+            + "\"aLongObj\": 9855431231853211," //
+            + "\"aBooleanObj\": false,"  //
+            + "\"aCharObj\":\"s\"," //
+            + "\"aString\": \"String\""  //
+            + "}");
 
     SimpleObject simpleObject = SimpleObject.create(originalJson);
 
@@ -45,9 +56,12 @@ public class GeneratedTypesTest {
   }
 
   @Test public void adapterObject() throws JSONException {
-    JSONObject originalJson = new JSONObject(
-        "{\n" + "    \"aInt\": 1,\n" + "    \"aSubType\": {\n" + "        \"value\": \"subType\"\n"
-            + "    }\n" + "}");
+    JSONObject originalJson = new JSONObject( //
+        "{\"aInt\": 1," //
+            + "\"aSubType\": {" //
+            + "\"value\": \"subType\"" //
+            + "}" //
+            + "}");
 
     AdapterObject adapterObject = AdapterObject.create(originalJson);
 
@@ -60,7 +74,7 @@ public class GeneratedTypesTest {
   }
 
   @Test public void namedObject() throws JSONException {
-    JSONObject originalJson = new JSONObject("{\n" + "  \"MyInt\":13\n" + "}");
+    JSONObject originalJson = new JSONObject("{\"MyInt\":13}");
 
     NamedObject namedObject = NamedObject.create(originalJson);
 
