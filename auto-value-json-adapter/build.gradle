@@ -4,12 +4,10 @@ sourceCompatibility = JavaVersion.VERSION_1_7
 targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
-  compile project(':auto-value-json-adapter')
-  compile libraries.javaPoet
-  compile libraries.autoValue
-  compile libraries.autoService
-  compile libraries.autoCommon
-  compile libraries.json
+  compileOnly libraries.json
+
+  testCompile libraries.junit
+  testCompile libraries.assertJ
 }
 
 apply from: rootProject.file('gradle/gradle-mvn-push.gradle')

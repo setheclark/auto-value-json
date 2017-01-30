@@ -1,12 +1,12 @@
 apply plugin: 'net.ltgt.apt'
 apply plugin: 'java'
 
-sourceCompatibility = versions.java
-targetCompatibility = versions.java
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
 
 dependencies {
   compile libraries.json
-  compile project(':auto-value-json-annotations')
+  compile project(':auto-value-json-adapter')
   compileOnly project(':auto-value-json')
   apt project(':auto-value-json')
 
