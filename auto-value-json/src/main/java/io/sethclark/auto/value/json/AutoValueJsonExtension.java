@@ -62,8 +62,7 @@ import static javax.lang.model.element.Modifier.STATIC;
     TypeElement type = context.autoValueClass();
     //Find method with param as JSONObject and return type as autovalue class.
     for (ExecutableElement method : ElementFilter.methodsIn(type.getEnclosedElements())) {
-      if (method.getModifiers().contains(Modifier.STATIC) && method.getModifiers()
-          .contains(Modifier.PUBLIC) && method.getParameters().size() == 1) {
+      if (method.getModifiers().contains(Modifier.STATIC) && method.getParameters().size() == 1) {
         TypeMirror rType = method.getReturnType();
         TypeName returnType = TypeName.get(rType);
 

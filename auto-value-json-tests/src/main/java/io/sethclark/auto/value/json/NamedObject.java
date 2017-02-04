@@ -6,7 +6,7 @@ import org.json.JSONObject;
 
 @AutoValue public abstract class NamedObject {
 
-  public static NamedObject create(JSONObject json) throws JSONException {
+  static NamedObject create(JSONObject json) throws JSONException {
     return AutoValue_NamedObject.fromJson(json);
   }
 
