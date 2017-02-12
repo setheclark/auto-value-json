@@ -27,7 +27,8 @@ public class GeneratedTypesTest {
             + "\"aLongObj\": 9855431231853211," //
             + "\"aBooleanObj\": false,"  //
             + "\"aCharObj\":\"s\"," //
-            + "\"aString\": \"String\""  //
+            + "\"aString\": \"String\"," //
+            + "\"aEnum\": \"B\"" //
             + "}");
 
     SimpleObject simpleObject = SimpleObject.create(originalJson);
@@ -49,6 +50,7 @@ public class GeneratedTypesTest {
     assertThat(simpleObject.aBooleanObj()).isFalse();
     assertThat(simpleObject.aCharObj()).isEqualTo('s');
     assertThat(simpleObject.aString()).isEqualTo("String");
+    assertThat(simpleObject.aEnum()).isEqualTo(TestEnum.B);
 
     JSONObject toJson = simpleObject.toJson();
 

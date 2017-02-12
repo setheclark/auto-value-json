@@ -26,7 +26,6 @@ public final class JsonProperty {
   final ExecutableElement element;
   final TypeName type;
   final ImmutableSet<String> annotations;
-  final boolean supportedType;
   TypeMirror typeAdapter;
 
   public JsonProperty(String humanName, ExecutableElement element) {
@@ -35,8 +34,6 @@ public final class JsonProperty {
     this.element = element;
     this.type = TypeName.get(element.getReturnType());
     this.annotations = buildAnnotations(element);
-
-    supportedType = JsonGeneratorUtils.isSupportedType(type);
 
     JsonAdapter jsonAdapter = element.getAnnotation(JsonAdapter.class);
     if (jsonAdapter != null) {

@@ -24,15 +24,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.ElementFilter;
+import javax.lang.model.util.Types;
+import javax.tools.Diagnostic;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static io.sethclark.auto.value.json.JsonGeneratorUtils.JSON_EXCEPTION;
+import static io.sethclark.auto.value.json.JsonGeneratorUtils.getTypeNameFromProperty;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -88,6 +93,7 @@ import static javax.lang.model.element.Modifier.STATIC;
   @Override public String generateClass(Context context, String className, String classToExtend,
       boolean isFinal) {
     List<JsonProperty> properties = JsonProperty.from(context);
+    validateProperties(context.processingEnvironment(), properties);
 
     Map<String, TypeName> types = convertPropertiesToTypes(context.properties());
     NameAllocator nameAllocator = new NameAllocator();
@@ -122,6 +128,24 @@ import static javax.lang.model.element.Modifier.STATIC;
     }
 
     return JavaFile.builder(context.packageName(), subclass.build()).build().toString();
+  }
+
+  private void validateProperties(ProcessingEnvironment processingEnvironment,
+      List<JsonProperty> properties) {
+    Types typeUtils = processingEnvironment.getTypeUtils();
+    for (JsonProperty property : properties) {
+      if (property.typeAdapter != null) {
+        continue;
+      }
+
+      TypeName type = getTypeNameFromProperty(property, typeUtils);
+
+      if (!JsonGeneratorUtils.isSupportedType(type)) {
+        processingEnvironment.getMessager()
+            .printMessage(Diagnostic.Kind.ERROR,
+                "Property " + property.methodName + " is not supported.", property.element);
+      }
+    }
   }
 
   MethodSpec generateConstructor(Map<String, TypeName> properties) {
@@ -184,6 +208,7 @@ import static javax.lang.model.element.Modifier.STATIC;
     builder.endControlFlow();
 
     builder.beginControlFlow("switch ($N)", key);
+    Types types = context.processingEnvironment().getTypeUtils();
     for (Map.Entry<JsonProperty, FieldSpec> entry : fields.entrySet()) {
       JsonProperty prop = entry.getKey();
       FieldSpec field = entry.getValue();
@@ -192,8 +217,8 @@ import static javax.lang.model.element.Modifier.STATIC;
       if (prop.typeAdapter != null && typeAdapters.containsKey(prop.typeAdapter)) {
         FieldSpec typeAdapter = typeAdapters.get(prop.typeAdapter);
         builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, json, field, key));
-      } else if (prop.supportedType) {
-        builder.addCode(JsonGeneratorUtils.readValue(prop, json, field, key, nameAllocator));
+      } else {
+        builder.addCode(JsonGeneratorUtils.readValue(types, prop, json, field, key, nameAllocator));
       }
       builder.addStatement("break");
 
@@ -225,6 +250,7 @@ import static javax.lang.model.element.Modifier.STATIC;
 
     FieldSpec json = FieldSpec.builder(JSON_OBJ_CLASS_NAME, nameAllocator.newName("json")).build();
     builder.addStatement("$1T $2N = new $1T()", JSON_OBJ_CLASS_NAME, json);
+    Types types = context.processingEnvironment().getTypeUtils();
 
     for (JsonProperty prop : properties) {
       if (prop.typeAdapter != null && typeAdapters.containsKey(prop.typeAdapter)) {
@@ -233,13 +259,15 @@ import static javax.lang.model.element.Modifier.STATIC;
             JsonGeneratorUtils.writeWithAdapter(typeAdapters.get(prop.typeAdapter), json, prop));
       } else {
         //TODO Discuss: Is null check needed?
+        builder.beginControlFlow("try");
         if (prop.nullable()) {
           builder.beginControlFlow("if ($N() != null)", prop.methodName);
-          builder.addCode(JsonGeneratorUtils.writeValue(prop, json));
+          builder.addCode(JsonGeneratorUtils.writeValue(types, prop, json));
           builder.endControlFlow();
         } else {
-          builder.addCode(JsonGeneratorUtils.writeValue(prop, json));
+          builder.addCode(JsonGeneratorUtils.writeValue(types, prop, json));
         }
+        builder.endControlFlow("catch($T e) {}", JSON_EXCEPTION);
       }
     }
 
