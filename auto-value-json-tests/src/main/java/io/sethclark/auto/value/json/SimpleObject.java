@@ -45,4 +45,6 @@ import org.json.JSONObject;
   public abstract Character aCharObj();
 
   public abstract String aString();
+
+  public abstract TestEnum aEnum();
 }
