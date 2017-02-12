@@ -3,7 +3,6 @@ package io.sethclark.auto.value.json;
 import com.google.auto.value.extension.AutoValueExtension;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +36,7 @@ public final class JsonProperty {
     this.type = TypeName.get(element.getReturnType());
     this.annotations = buildAnnotations(element);
 
-    supportedType = JsonGeneratorUtils.isSupportType(type);
+    supportedType = JsonGeneratorUtils.isSupportedType(type);
 
     JsonAdapter jsonAdapter = element.getAnnotation(JsonAdapter.class);
     if (jsonAdapter != null) {
