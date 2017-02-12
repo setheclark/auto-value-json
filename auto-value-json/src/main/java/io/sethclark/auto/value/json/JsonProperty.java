@@ -3,8 +3,8 @@ package io.sethclark.auto.value.json;
 import com.google.auto.value.extension.AutoValueExtension;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
@@ -22,17 +22,6 @@ public final class JsonProperty {
     return builder.build();
   }
 
-  private static final List<TypeName> SUPPORTED_TYPES = Arrays.asList( //
-      TypeName.get(String.class), //
-      TypeName.CHAR, TypeName.CHAR.box(), //
-      TypeName.DOUBLE, TypeName.DOUBLE.box(), //
-      TypeName.FLOAT, TypeName.FLOAT.box(), //
-      TypeName.INT, TypeName.INT.box(), //
-      TypeName.BYTE, TypeName.BYTE.box(), //
-      TypeName.SHORT, TypeName.SHORT.box(), //
-      TypeName.LONG, TypeName.LONG.box(), //
-      TypeName.BOOLEAN, TypeName.BOOLEAN.box());
-
   final String methodName;
   final String humanName;
   final ExecutableElement element;
@@ -48,7 +37,7 @@ public final class JsonProperty {
     this.type = TypeName.get(element.getReturnType());
     this.annotations = buildAnnotations(element);
 
-    supportedType = SUPPORTED_TYPES.contains(type);
+    supportedType = JsonGeneratorUtils.isSupportType(type);
 
     JsonAdapter jsonAdapter = element.getAnnotation(JsonAdapter.class);
     if (jsonAdapter != null) {

@@ -1,16 +1,27 @@
 package io.sethclark.auto.value.json;
 
+import com.google.common.collect.ImmutableSet;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.NameAllocator;
 import com.squareup.javapoet.ParameterSpec;
 import com.squareup.javapoet.TypeName;
+import java.util.Set;
 import javax.lang.model.element.Modifier;
 import org.json.JSONException;
 
 public class JsonGeneratorUtils {
 
   public static final TypeName JSON_EXCEPTION = TypeName.get(JSONException.class);
+
+  static final TypeName STRING = ClassName.get("java.lang", "String");
+
+  private static final Set<TypeName> SUPPORTED_TYPES = ImmutableSet.of(STRING);
+
+  public static boolean isSupportType(TypeName type) {
+    return type.isPrimitive() || type.isBoxedPrimitive() || SUPPORTED_TYPES.contains(type);
+  }
 
   static CodeBlock readValue(JsonProperty property, ParameterSpec json, FieldSpec field,
       FieldSpec key, NameAllocator nameAllocator) {
