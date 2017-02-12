@@ -19,7 +19,7 @@ public class JsonGeneratorUtils {
 
   private static final Set<TypeName> SUPPORTED_TYPES = ImmutableSet.of(STRING);
 
-  public static boolean isSupportType(TypeName type) {
+  public static boolean isSupportedType(TypeName type) {
     return type.isPrimitive() || type.isBoxedPrimitive() || SUPPORTED_TYPES.contains(type);
   }
 
