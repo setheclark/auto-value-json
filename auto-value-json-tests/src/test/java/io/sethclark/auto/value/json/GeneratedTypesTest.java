@@ -86,4 +86,27 @@ public class GeneratedTypesTest {
 
     JSONAssert.assertEquals(toJson.toString(), originalJson, true);
   }
+
+  @Test public void devaultValues() throws JSONException {
+    DefaultValuesObject defaultValuesObject = DefaultValuesObject.create(new JSONObject());
+
+    assertThat(defaultValuesObject.aInt()).isEqualTo(-1);
+    assertThat(defaultValuesObject.aByte()).isEqualTo((byte) -1);
+    assertThat(defaultValuesObject.aShort()).isEqualTo((short) -1);
+    assertThat(defaultValuesObject.aDouble()).isEqualTo(-1.2);
+    assertThat(defaultValuesObject.aFloat()).isEqualTo(-1.2f);
+    assertThat(defaultValuesObject.aLong()).isEqualTo(-1L);
+    assertThat(defaultValuesObject.aBoolean()).isTrue();
+    assertThat(defaultValuesObject.aChar()).isEqualTo('r');
+    assertThat(defaultValuesObject.aIntObj()).isEqualTo(-1);
+    assertThat(defaultValuesObject.aByteObj()).isEqualTo((byte) -1);
+    assertThat(defaultValuesObject.aShortObj()).isEqualTo((short) -1);
+    assertThat(defaultValuesObject.aDoubleObj()).isEqualTo(-1.2);
+    assertThat(defaultValuesObject.aFloatObj()).isEqualTo(-1.2f);
+    assertThat(defaultValuesObject.aLongObj()).isEqualTo(-1);
+    assertThat(defaultValuesObject.aBooleanObj()).isTrue();
+    assertThat(defaultValuesObject.aCharObj()).isEqualTo('r');
+    assertThat(defaultValuesObject.aString()).isEqualTo("test");
+    assertThat(defaultValuesObject.aEnum()).isEqualTo(TestEnum.A);
+  }
 }

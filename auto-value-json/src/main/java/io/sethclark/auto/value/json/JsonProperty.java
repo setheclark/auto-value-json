@@ -27,6 +27,7 @@ public final class JsonProperty {
   final TypeName type;
   final ImmutableSet<String> annotations;
   TypeMirror typeAdapter;
+  String defaultValue;
 
   public JsonProperty(String humanName, ExecutableElement element) {
     this.methodName = element.getSimpleName().toString();
@@ -42,6 +43,11 @@ public final class JsonProperty {
       } catch (MirroredTypeException e) {
         typeAdapter = e.getTypeMirror();
       }
+    }
+
+    DefaultValue defaultValue = element.getAnnotation(DefaultValue.class);
+    if (defaultValue != null) {
+      this.defaultValue = defaultValue.value();
     }
   }
 

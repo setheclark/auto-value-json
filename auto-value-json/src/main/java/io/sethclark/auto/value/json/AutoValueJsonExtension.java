@@ -189,7 +189,7 @@ import static javax.lang.model.element.Modifier.STATIC;
           FieldSpec.builder(property.type, nameAllocator.newName(property.humanName)).build();
       fields.put(property, field);
 
-      builder.addStatement("$T $N = $L", field.type, field, defaultValue(field.type));
+      builder.addStatement("$T $N = $L", field.type, field, defaultValue(property, field.type));
     }
 
     FieldSpec keyItr = FieldSpec.builder(ParameterizedTypeName.get(Iterator.class, String.class),
@@ -289,7 +289,10 @@ import static javax.lang.model.element.Modifier.STATIC;
     return ClassName.get(context.packageName(), "AutoValue_" + name);
   }
 
-  private String defaultValue(TypeName type) {
+  private String defaultValue(JsonProperty property, TypeName type) {
+    if (property.defaultValue != null) {
+      return property.defaultValue;
+    }
     if (type == TypeName.BOOLEAN) {
       return "false";
     } else if (type == TypeName.BYTE) {
