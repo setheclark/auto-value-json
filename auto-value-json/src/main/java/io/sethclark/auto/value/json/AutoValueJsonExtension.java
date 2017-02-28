@@ -26,10 +26,14 @@ import java.util.Set;
 import java.util.TreeSet;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.type.TypeVariable;
 import javax.lang.model.util.ElementFilter;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
@@ -37,7 +41,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import static io.sethclark.auto.value.json.JsonGeneratorUtils.JSON_EXCEPTION;
-import static io.sethclark.auto.value.json.JsonGeneratorUtils.getTypeNameFromProperty;
 import static javax.lang.model.element.Modifier.ABSTRACT;
 import static javax.lang.model.element.Modifier.FINAL;
 import static javax.lang.model.element.Modifier.PRIVATE;
@@ -138,12 +141,21 @@ import static javax.lang.model.element.Modifier.STATIC;
         continue;
       }
 
-      TypeName type = getTypeNameFromProperty(property, typeUtils);
+      TypeMirror type = property.element.getReturnType();
+      if (type.getKind() == TypeKind.ARRAY) {
+        type = ((ArrayType) type).getComponentType();
+      }
+      if (type.getKind() == TypeKind.TYPEVAR) {
+        type = ((TypeVariable) type).getUpperBound();
+      }
 
-      if (!JsonGeneratorUtils.isSupportedType(type)) {
-        processingEnvironment.getMessager()
-            .printMessage(Diagnostic.Kind.ERROR,
-                "Property " + property.methodName + " is not supported.", property.element);
+      TypeElement element = (TypeElement) typeUtils.asElement(type);
+      if (element == null || element.getKind() != ElementKind.ENUM) {
+        if (!JsonGeneratorUtils.isSupportedType(TypeName.get(type))) {
+          processingEnvironment.getMessager()
+              .printMessage(Diagnostic.Kind.ERROR,
+                  "Property " + property.methodName + " is not supported.", property.element);
+        }
       }
     }
   }
@@ -218,7 +230,7 @@ import static javax.lang.model.element.Modifier.STATIC;
         FieldSpec typeAdapter = typeAdapters.get(prop.typeAdapter);
         builder.addCode(JsonGeneratorUtils.readWithAdapter(typeAdapter, json, field, key));
       } else {
-        builder.addCode(JsonGeneratorUtils.readValue(types, prop, json, field, key, nameAllocator));
+        builder.addCode(JsonGeneratorUtils.readValue(types, prop, json, field, key));
       }
       builder.addStatement("break");
 
